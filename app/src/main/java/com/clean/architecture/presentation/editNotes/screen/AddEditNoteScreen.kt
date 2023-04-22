@@ -26,12 +26,41 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.clean.architecture.data.source.local.entity.Note
 import com.clean.architecture.presentation.editNotes.components.AddEditNoteEvent
+import com.clean.architecture.presentation.editNotes.components.NoteTextField
 import com.clean.architecture.presentation.editNotes.components.PostNoteState
 import com.clean.architecture.presentation.editNotes.components.TransparentHintTextField
+import com.clean.architecture.ui.theme.ArchitectureTemplatesTheme
 import kotlinx.coroutines.launch
+
+@Preview(showBackground = true)
+@Composable
+fun AddEditNoteScreenPreview() {
+    ArchitectureTemplatesTheme {
+        AddEditNoteScreen(
+            PostNoteState(
+                noteTitleField = NoteTextField(
+                    hint = "Enter title..."
+                ),
+                noteContentField = NoteTextField(
+                    hint = "Enter some content"
+                ),
+                noteBackgroundColor = Color.White.toArgb(),
+                uiEvent = AddEditNoteViewModel.UiEvent.Loading,
+                onAadEditNoteEvent = {
+
+                }
+            ),
+            noteColor = -1,
+            onNavigateUp = {
+
+            }
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
