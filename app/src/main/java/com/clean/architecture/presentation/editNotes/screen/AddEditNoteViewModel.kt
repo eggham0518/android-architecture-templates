@@ -11,11 +11,9 @@ import com.clean.architecture.data.source.local.entity.Note
 import com.clean.architecture.data.types.exeption.InvalidNoteException
 import com.clean.architecture.domain.use_case.NoteUseCases
 import com.clean.architecture.presentation.editNotes.components.AddEditNoteEvent
-import com.clean.architecture.presentation.editNotes.components.NoteTextFieldState
-
+import com.clean.architecture.presentation.editNotes.components.NoteTextField
+import com.clean.architecture.presentation.editNotes.components.PostNoteState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -26,25 +24,22 @@ class AddEditNoteViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _noteTitle = mutableStateOf(
-        NoteTextFieldState(
-            hint = "Enter title..."
+    private val _postNoteState = mutableStateOf(
+        PostNoteState(
+            noteTitleField = NoteTextField(
+                hint = "Enter title..."
+            ),
+            noteContentField = NoteTextField(
+                hint = "Enter some content"
+            ),
+            noteBackgroundColor = Color.DarkGray.toArgb(),
+            uiEvent = UiEvent.Loading,
+            onAadEditNoteEvent = {
+                onEvent(it)
+            }
         )
     )
-    val noteTitle: State<NoteTextFieldState> = _noteTitle
-
-    private val _noteContent = mutableStateOf(
-        NoteTextFieldState(
-            hint = "Enter some content"
-        )
-    )
-    val noteContent: State<NoteTextFieldState> = _noteContent
-
-    private val _noteColor = mutableStateOf(Color.DarkGray.toArgb())
-    val noteColor: State<Int> = _noteColor
-
-    private val _eventFlow = MutableSharedFlow<UiEvent>()
-    val eventFlow = _eventFlow.asSharedFlow()
+    val postNoteState: State<PostNoteState> = _postNoteState
 
     private lateinit var currentNoteId: String
 
@@ -56,80 +51,77 @@ class AddEditNoteViewModel @Inject constructor(
                     currentNoteId = UUID.randomUUID().toString()
                 } else {
                     currentNoteId = selectedNote.id
-                    _noteTitle.value = noteTitle.value.copy(
-                        text = selectedNote.title,
-                        isHintVisible = false
+                    _postNoteState.value = _postNoteState.value.copy(
+                        noteTitleField = _postNoteState.value.noteTitleField.copy(
+                            text = selectedNote.title,
+                            isHintVisible = false
+                        ),
+                        noteContentField = _postNoteState.value.noteTitleField.copy(
+                            text = selectedNote.content,
+                            isHintVisible = false
+                        ),
+                        noteBackgroundColor = selectedNote.color
                     )
-                    _noteContent.value = _noteContent.value.copy(
-                        text = selectedNote.content,
-                        isHintVisible = false
-                    )
-                    _noteColor.value = selectedNote.color
                 }
             }
-
-
         }
     }
 
-    fun onEvent(event: AddEditNoteEvent) {
-        when (event) {
-            is AddEditNoteEvent.EnteredTitle -> {
-                _noteTitle.value = noteTitle.value.copy(
-                    text = event.value
-                )
-            }
-
-            is AddEditNoteEvent.ChangeTitleFocus -> {
-                _noteTitle.value = noteTitle.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            noteTitle.value.text.isBlank()
-                )
-            }
-
-            is AddEditNoteEvent.EnteredContent -> {
-                _noteContent.value = _noteContent.value.copy(
-                    text = event.value
-                )
-            }
-
-            is AddEditNoteEvent.ChangeContentFocus -> {
-                _noteContent.value = _noteContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            _noteContent.value.text.isBlank()
-                )
-            }
-
-            is AddEditNoteEvent.ChangeColor -> {
-                _noteColor.value = event.color
-            }
-
-            is AddEditNoteEvent.SaveNote -> {
-                viewModelScope.launch {
-                    try {
-                        noteUseCases.addNote(
-                            Note(
-                                title = noteTitle.value.text,
-                                content = noteContent.value.text,
-                                timestamp = System.currentTimeMillis(),
-                                color = noteColor.value,
-                                id = currentNoteId,
+    private fun onEvent(event: AddEditNoteEvent) {
+        with(_postNoteState.value) {
+            when (event) {
+                is AddEditNoteEvent.EnteredTitle -> {
+                    _postNoteState.value =
+                        copy(noteTitleField = noteTitleField.copy(text = event.value))
+                }
+                is AddEditNoteEvent.ChangeTitleFocus -> {
+                    val isHintVisible = !event.focusState.isFocused && noteTitleField.text.isBlank()
+                    _postNoteState.value =
+                        copy(noteTitleField = noteTitleField.copy(isHintVisible = isHintVisible))
+                }
+                is AddEditNoteEvent.EnteredContent -> {
+                    _postNoteState.value = copy(
+                        noteContentField = noteContentField.copy(text = event.value)
+                    )
+                }
+                is AddEditNoteEvent.ChangeContentFocus -> {
+                    val isHintVisible =
+                        !event.focusState.isFocused && noteContentField.text.isBlank()
+                    _postNoteState.value = copy(
+                        noteContentField = noteContentField.copy(isHintVisible = isHintVisible)
+                    )
+                }
+                is AddEditNoteEvent.ChangeColor -> {
+                    _postNoteState.value = copy(noteBackgroundColor = event.color)
+                }
+                is AddEditNoteEvent.SaveNote -> {
+                    viewModelScope.launch {
+                        try {
+                            noteUseCases.addNote(
+                                Note(
+                                    title = noteTitleField.text,
+                                    content = noteContentField.text,
+                                    timestamp = System.currentTimeMillis(),
+                                    color = noteBackgroundColor,
+                                    id = currentNoteId,
+                                )
                             )
-                        )
-                        _eventFlow.emit(UiEvent.SaveNote)
-                    } catch (e: InvalidNoteException) {
-                        _eventFlow.emit(
-                            UiEvent.ShowSnackbar(
+                            _postNoteState.value = copy(uiEvent = UiEvent.SaveNote)
+                        } catch (e: InvalidNoteException) {
+                            val uiEvent = UiEvent.ShowSnackbar(
                                 message = e.message ?: "Couldn't save note"
                             )
-                        )
+                            _postNoteState.value = copy(uiEvent = uiEvent)
+                        }
                     }
                 }
             }
         }
+
     }
 
     sealed class UiEvent {
+        object Loading : UiEvent()
         data class ShowSnackbar(val message: String) : UiEvent()
         object SaveNote : UiEvent()
     }

@@ -7,12 +7,14 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.clean.architecture.presentation.editNotes.screen.AddEditNoteScreen
+import com.clean.architecture.presentation.editNotes.screen.AddEditNoteViewModel
 import com.clean.architecture.presentation.notes.screen.NotesScreen
 import com.clean.architecture.presentation.screen.Screen
 import com.clean.architecture.ui.theme.ArchitectureTemplatesTheme
@@ -70,7 +72,9 @@ class MainActivity : ComponentActivity() {
                 )
             ) {
                 val color = it.arguments?.getInt("noteColor") ?: -1
+                val viewModel = hiltViewModel<AddEditNoteViewModel>()
                 AddEditNoteScreen(
+                    viewModel.postNoteState.value,
                     noteColor = color,
                     onNavigateUp = {
                         navController.navigateUp()
