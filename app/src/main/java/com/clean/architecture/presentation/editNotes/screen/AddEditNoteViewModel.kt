@@ -71,53 +71,59 @@ class AddEditNoteViewModel @Inject constructor(
         with(_postNoteState.value) {
             when (event) {
                 is AddEditNoteEvent.EnteredTitle -> {
-                    _postNoteState.value =
-                        copy(noteTitleField = noteTitleField.copy(text = event.value))
+                    copy(noteTitleField = noteTitleField.copy(text = event.value))
                 }
+
                 is AddEditNoteEvent.ChangeTitleFocus -> {
                     val isHintVisible = !event.focusState.isFocused && noteTitleField.text.isBlank()
-                    _postNoteState.value =
-                        copy(noteTitleField = noteTitleField.copy(isHintVisible = isHintVisible))
+                    copy(noteTitleField = noteTitleField.copy(isHintVisible = isHintVisible))
                 }
+
                 is AddEditNoteEvent.EnteredContent -> {
-                    _postNoteState.value = copy(
-                        noteContentField = noteContentField.copy(text = event.value)
-                    )
+                    copy(noteContentField = noteContentField.copy(text = event.value))
                 }
+
                 is AddEditNoteEvent.ChangeContentFocus -> {
                     val isHintVisible =
                         !event.focusState.isFocused && noteContentField.text.isBlank()
-                    _postNoteState.value = copy(
-                        noteContentField = noteContentField.copy(isHintVisible = isHintVisible)
-                    )
+                    copy(noteContentField = noteContentField.copy(isHintVisible = isHintVisible))
                 }
+
                 is AddEditNoteEvent.ChangeColor -> {
-                    _postNoteState.value = copy(noteBackgroundColor = event.color)
+                    copy(noteBackgroundColor = event.color)
                 }
+
                 is AddEditNoteEvent.SaveNote -> {
-                    viewModelScope.launch {
-                        try {
-                            noteUseCases.addNote(
-                                Note(
-                                    title = noteTitleField.text,
-                                    content = noteContentField.text,
-                                    timestamp = System.currentTimeMillis(),
-                                    color = noteBackgroundColor,
-                                    id = currentNoteId,
-                                )
-                            )
-                            _postNoteState.value = copy(uiEvent = UiEvent.SaveNote)
-                        } catch (e: InvalidNoteException) {
-                            val uiEvent = UiEvent.ShowSnackbar(
-                                message = e.message ?: "Couldn't save note"
-                            )
-                            _postNoteState.value = copy(uiEvent = uiEvent)
-                        }
-                    }
+                    saveNote()
+                    return
+                }
+            }
+        }.also { postNoteState ->
+            if (event !is AddEditNoteEvent.SaveNote) _postNoteState.value = postNoteState
+        }
+    }
+
+    private fun saveNote() {
+        viewModelScope.launch {
+            with(_postNoteState.value) {
+                try {
+                    val note = Note(
+                        title = noteTitleField.text,
+                        content = noteContentField.text,
+                        timestamp = System.currentTimeMillis(),
+                        color = noteBackgroundColor,
+                        id = currentNoteId,
+                    )
+                    noteUseCases.addNote(note)
+                    _postNoteState.value = copy(uiEvent = UiEvent.SaveNote)
+                } catch (e: InvalidNoteException) {
+                    val uiEvent = UiEvent.ShowSnackbar(
+                        message = e.message ?: "Couldn't save note"
+                    )
+                    _postNoteState.value = copy(uiEvent = uiEvent)
                 }
             }
         }
-
     }
 
     sealed class UiEvent {
