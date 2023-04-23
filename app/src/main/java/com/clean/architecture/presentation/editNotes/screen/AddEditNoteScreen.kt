@@ -19,6 +19,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -31,79 +32,82 @@ import androidx.compose.ui.unit.dp
 import com.clean.architecture.data.source.local.entity.Note
 import com.clean.architecture.presentation.editNotes.components.AddEditNoteEvent
 import com.clean.architecture.presentation.editNotes.components.NoteTextField
-import com.clean.architecture.presentation.editNotes.components.PostNoteState
 import com.clean.architecture.presentation.editNotes.components.TransparentHintTextField
 import com.clean.architecture.ui.theme.ArchitectureTemplatesTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Preview(showBackground = true)
 @Composable
 fun AddEditNoteScreenPreview() {
     ArchitectureTemplatesTheme {
-        AddEditNoteScreen(
-            PostNoteState(
-                noteTitleField = NoteTextField(
-                    hint = "Enter title..."
-                ),
-                noteContentField = NoteTextField(
-                    hint = "Enter some content"
-                ),
-                noteBackgroundColor = Color.White.toArgb(),
-                uiEvent = AddEditNoteViewModel.UiEvent.Loading,
-                onAadEditNoteEvent = {
 
-                }
-            ),
+        val previewContract = object : AddEditNoteContract {
+            override val noteTitleField = MutableStateFlow(NoteTextField(hint = "Enter title..."))
+            override val noteContentField = MutableStateFlow(NoteTextField(hint = "Enter some content"))
+            override val noteBackgroundColor = MutableStateFlow(Color.White.toArgb())
+            override val eventFlow = MutableSharedFlow<AddEditNoteViewModel.UiEvent>()
+
+            override fun onEvent(event: AddEditNoteEvent) {
+
+            }
+        }
+
+        AddEditNoteScreen(
+            previewContract,
             noteColor = -1,
             onNavigateUp = {
 
             }
         )
     }
+
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditNoteScreen(
-    postNoteState: PostNoteState,
+    addEditNoteContract: AddEditNoteContract,
     noteColor: Int,
     onNavigateUp: () -> Unit,
 ) {
 
-    val titleState = postNoteState.noteTitleField
-    val contentState = postNoteState.noteContentField
+    val titleState = addEditNoteContract.noteTitleField.collectAsState()
+    val contentState = addEditNoteContract.noteContentField.collectAsState()
+    val noteBackgroundColor = addEditNoteContract.noteBackgroundColor.collectAsState()
 
     val noteBackgroundAnimaitable = remember {
         Animatable(
-            Color(if (noteColor != -1) noteColor else postNoteState.noteBackgroundColor)
+            Color(if (noteColor != -1) noteColor else noteBackgroundColor.value)
         )
     }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(key1 = postNoteState.uiEvent, block = {
-        when (postNoteState.uiEvent) {
-            is AddEditNoteViewModel.UiEvent.ShowSnackbar -> {
-                snackbarHostState.showSnackbar(
-                    message = postNoteState.uiEvent.message
-                )
-            }
+    LaunchedEffect(key1 = true) {
+        addEditNoteContract.eventFlow.collectLatest { event ->
+            when (event) {
+                is AddEditNoteViewModel.UiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message
+                    )
+                }
 
-            is AddEditNoteViewModel.UiEvent.SaveNote -> {
-                onNavigateUp()
-            }
-
-            AddEditNoteViewModel.UiEvent.Loading -> {
-
+                is AddEditNoteViewModel.UiEvent.SaveNote -> {
+                    onNavigateUp()
+                }
             }
         }
-    })
+    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    postNoteState.onAadEditNoteEvent(AddEditNoteEvent.SaveNote)
+                    addEditNoteContract.onEvent(AddEditNoteEvent.SaveNote)
                 },
             ) {
                 Icon(imageVector = Icons.Default.Save, contentDescription = "Save note")
@@ -136,7 +140,7 @@ fun AddEditNoteScreen(
                             .background(color)
                             .border(
                                 width = 3.dp,
-                                color = if (postNoteState.noteBackgroundColor == colorInt) {
+                                color = if (noteBackgroundColor.value == colorInt) {
                                     Color.Black
                                 } else Color.Transparent,
                                 shape = CircleShape
@@ -150,7 +154,9 @@ fun AddEditNoteScreen(
                                         )
                                     )
                                 }
-                                postNoteState.onAadEditNoteEvent(AddEditNoteEvent.ChangeColor(colorInt))
+                                addEditNoteContract.onEvent(
+                                    AddEditNoteEvent.ChangeColor(colorInt)
+                                )
                             }
                     )
                 }
@@ -158,33 +164,34 @@ fun AddEditNoteScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
             TransparentHintTextField(
-                text = titleState.text,
-                hint = titleState.hint,
+                text = titleState.value.text,
+                hint = titleState.value.hint,
                 onValueChange = {
-                    postNoteState.onAadEditNoteEvent(AddEditNoteEvent.EnteredTitle(it))
+                    addEditNoteContract.onEvent(AddEditNoteEvent.EnteredTitle(it))
                 },
                 onFocusChange = {
-                    postNoteState.onAadEditNoteEvent(AddEditNoteEvent.ChangeTitleFocus(it))
+                    addEditNoteContract.onEvent(AddEditNoteEvent.ChangeTitleFocus(it))
                 },
-                isHintVisible = titleState.isHintVisible,
+                isHintVisible = titleState.value.isHintVisible,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.headlineSmall
             )
             Spacer(modifier = Modifier.height(16.dp))
             TransparentHintTextField(
-                text = contentState.text,
-                hint = contentState.hint,
+                text = contentState.value.text,
+                hint = contentState.value.hint,
                 onValueChange = {
-                    postNoteState.onAadEditNoteEvent(AddEditNoteEvent.EnteredContent(it))
+                    addEditNoteContract.onEvent(AddEditNoteEvent.EnteredContent(it))
                 },
                 onFocusChange = {
-                    postNoteState.onAadEditNoteEvent(AddEditNoteEvent.ChangeContentFocus(it))
+                    addEditNoteContract.onEvent(AddEditNoteEvent.ChangeContentFocus(it))
                 },
-                isHintVisible = contentState.isHintVisible,
+                isHintVisible = contentState.value.isHintVisible,
                 textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxHeight()
             )
         }
     }
+
 }
 

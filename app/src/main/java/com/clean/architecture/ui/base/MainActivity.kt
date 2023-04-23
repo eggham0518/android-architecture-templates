@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 val color = it.arguments?.getInt("noteColor") ?: -1
                 val viewModel = hiltViewModel<AddEditNoteViewModel>()
                 AddEditNoteScreen(
-                    viewModel.postNoteState.value,
+                    addEditNoteContract = viewModel,
                     noteColor = color,
                     onNavigateUp = {
                         navController.navigateUp()
