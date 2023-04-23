@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.clean.architecture.data.di.module.DefaultDispatcher
 import com.clean.architecture.data.source.local.entity.Note
 import com.clean.architecture.data.types.exeption.InvalidNoteException
 import com.clean.architecture.domain.use_case.NoteUseCases
@@ -14,13 +15,16 @@ import com.clean.architecture.presentation.editNotes.components.AddEditNoteEvent
 import com.clean.architecture.presentation.editNotes.components.NoteTextField
 import com.clean.architecture.presentation.editNotes.components.PostNoteState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class AddEditNoteViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
+    @DefaultDispatcher private val defaultCoroutineDispatcher: CoroutineDispatcher,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -44,27 +48,42 @@ class AddEditNoteViewModel @Inject constructor(
     private lateinit var currentNoteId: String
 
     init {
-        savedStateHandle.get<String?>("noteId")?.let { noteId ->
-            viewModelScope.launch {
-                val selectedNote = noteUseCases.getNote(noteId)
-                if (selectedNote == null) {
-                    currentNoteId = UUID.randomUUID().toString()
-                } else {
-                    currentNoteId = selectedNote.id
-                    _postNoteState.value = _postNoteState.value.copy(
-                        noteTitleField = _postNoteState.value.noteTitleField.copy(
-                            text = selectedNote.title,
-                            isHintVisible = false
-                        ),
-                        noteContentField = _postNoteState.value.noteTitleField.copy(
-                            text = selectedNote.content,
-                            isHintVisible = false
-                        ),
-                        noteBackgroundColor = selectedNote.color
-                    )
-                }
+        initNote(savedStateHandle)
+    }
+
+    private fun initNote(savedStateHandle: SavedStateHandle) {
+        viewModelScope.launch {
+            val noteId = savedStateHandle.get<String?>("noteId")
+            if (noteId == null) {
+                initNewNoteId()
+                return@launch
+            }
+            val selectedNote = noteUseCases.getNote(noteId)
+            if (selectedNote == null) {
+                initNewNoteId()
+            } else {
+                initSelectedNote(selectedNote)
             }
         }
+    }
+
+    private suspend fun initNewNoteId() {
+        currentNoteId = withContext(defaultCoroutineDispatcher) { UUID.randomUUID().toString() }
+    }
+
+    private fun initSelectedNote(selectedNote: Note) {
+        currentNoteId = selectedNote.id
+        _postNoteState.value = _postNoteState.value.copy(
+            noteTitleField = _postNoteState.value.noteTitleField.copy(
+                text = selectedNote.title,
+                isHintVisible = false
+            ),
+            noteContentField = _postNoteState.value.noteTitleField.copy(
+                text = selectedNote.content,
+                isHintVisible = false
+            ),
+            noteBackgroundColor = selectedNote.color
+        )
     }
 
     private fun onEvent(event: AddEditNoteEvent) {
