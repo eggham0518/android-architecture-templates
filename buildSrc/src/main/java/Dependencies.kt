@@ -17,7 +17,7 @@ object Versions {
     const val composeMaterial3Stable = "1.0.1"
 
     const val composeUIToolingPreviewStable = "1.4.1"
-    const val kotlinCompilerExtension  = "1.4.6"
+    const val kotlinCompilerExtension = "1.4.6"
 
     const val composeNavigationStable = "2.5.3"
     const val composeViewModelStable = "2.6.1"
@@ -32,7 +32,7 @@ object Versions {
     const val material = "1.4.0"
     const val accompanist = "0.28.0"
 
-    const val lifecycle = "2.3.1"
+    const val lifecycle = "2.6.1"
 
     const val junit = "4.13.2"
 
@@ -56,7 +56,8 @@ object Deps {
             "com.google.accompanist:accompanist-navigation-animation:${Versions.accompanist}"
         const val inset = "com.google.accompanist:accompanist-insets:${Versions.accompanist}"
         const val insetsUi = "com.google.accompanist:accompanist-insets-ui:${Versions.accompanist}"
-        const val swiperefresh = "com.google.accompanist:accompanist-swiperefresh:${Versions.accompanist}"
+        const val swiperefresh =
+            "com.google.accompanist:accompanist-swiperefresh:${Versions.accompanist}"
         const val permissions =
             "com.google.accompanist:accompanist-permissions:${Versions.accompanist}"
     }
@@ -68,11 +69,13 @@ object Deps {
     object AndroidX {
         const val lifecycleRuntimeKtx =
             "androidx.lifecycle:lifecycle-runtime-ktx:${Versions.lifecycleRuntimeKtx}"
-        const val activityCompose = "androidx.activity:activity-compose:${Versions.activityComposeStable}"
+        const val activityCompose =
+            "androidx.activity:activity-compose:${Versions.activityComposeStable}"
         const val activityKtx = "androidx.activity:activity-ktx:${activityKTXStable}"
     }
 
     object LifeCycle {
+        const val lifecycleRuntimeCompose = "androidx.lifecycle:lifecycle-runtime-compose:${Versions.lifecycle}"
         const val lifecycleRuntimeKtx =
             "androidx.lifecycle:lifecycle-runtime-ktx:${Versions.lifecycle}"
         const val lifecycleLiveDataKtx =
@@ -92,12 +95,16 @@ object Deps {
     object Compose {
 
         const val ui = "androidx.compose.ui:ui:${Versions.composeStable}"
-        const val material = "androidx.compose.material3:material3:${Versions.composeMaterial3Stable}"
+        const val material =
+            "androidx.compose.material3:material3:${Versions.composeMaterial3Stable}"
 
-        const val icon =  "androidx.compose.material:material-icons-extended:${Versions.composeStable}"
+        const val icon =
+            "androidx.compose.material:material-icons-extended:${Versions.composeStable}"
 
-        const val preview = "androidx.compose.ui:ui-tooling:${Versions.composeUIToolingPreviewStable}"
-        const val preview_tooling = "androidx.compose.ui:ui-tooling-preview:${Versions.composeUIToolingPreviewStable}"
+        const val preview =
+            "androidx.compose.ui:ui-tooling:${Versions.composeUIToolingPreviewStable}"
+        const val preview_tooling =
+            "androidx.compose.ui:ui-tooling-preview:${Versions.composeUIToolingPreviewStable}"
 
         const val navigation =
             "androidx.navigation:navigation-compose:${Versions.composeNavigationStable}"

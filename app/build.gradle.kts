@@ -104,9 +104,7 @@ dependencies {
     }
 
     with(Deps.LifeCycle) {
-        implementation(lifecycleRuntimeKtx)
-        implementation(lifecycleLiveDataKtx)
-        implementation(lifecycleViewModelKtx)
+        implementation(lifecycleRuntimeCompose)
     }
 
     with(Deps.Room) {

@@ -19,7 +19,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -29,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clean.architecture.data.source.local.entity.Note
 import com.clean.architecture.presentation.editNotes.components.AddEditNoteEvent
 import com.clean.architecture.presentation.editNotes.components.NoteTextField
@@ -75,9 +75,9 @@ fun AddEditNoteScreen(
     onNavigateUp: () -> Unit,
 ) {
 
-    val titleState = addEditNoteContract.noteTitleField.collectAsState()
-    val contentState = addEditNoteContract.noteContentField.collectAsState()
-    val noteBackgroundColor = addEditNoteContract.noteBackgroundColor.collectAsState()
+    val titleState = addEditNoteContract.noteTitleField.collectAsStateWithLifecycle()
+    val contentState = addEditNoteContract.noteContentField.collectAsStateWithLifecycle()
+    val noteBackgroundColor = addEditNoteContract.noteBackgroundColor.collectAsStateWithLifecycle()
 
     val noteBackgroundAnimaitable = remember {
         Animatable(
