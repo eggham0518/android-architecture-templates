@@ -1,11 +1,13 @@
 package com.clean.architecture.data.repo.note
 
+import com.clean.architecture.data.di.module.IoDispatcher
 import com.clean.architecture.data.source.local.database.dao.NoteDao
 import com.clean.architecture.data.source.local.entity.Note
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 interface NoteRepository {
 
@@ -19,9 +21,9 @@ interface NoteRepository {
 
 }
 
-class NoteRepositoryImpl(
+class NoteRepositoryImpl @Inject constructor(
     private val dao: NoteDao,
-    private val dispatcher: CoroutineDispatcher
+   @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : NoteRepository {
 
     override val notes: Flow<List<Note>>
